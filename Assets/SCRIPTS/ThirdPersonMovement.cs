@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(CharacterController))]
 [RequireComponent(typeof(Animator))]
@@ -14,7 +15,23 @@ public class ThirdPersonMovement : MonoBehaviour
 
     private CharacterController controller;
     private Animator animator;
+    private InputAction moveAction;
     private Vector3 velocity;
+
+    private void Awake()
+    {
+        moveAction = InputSystem.actions.FindAction("Player/Move");
+
+        if (moveAction == null)
+        {
+            Debug.LogError("No se ha encontrado la acción 'Player/Move' en las acciones globales del proyecto.", this);
+        }
+    }
+
+    private void OnEnable()
+    {
+        moveAction?.Enable();
+    }
 
     void Start()
     {
@@ -29,11 +46,9 @@ public class ThirdPersonMovement : MonoBehaviour
 
     void Update()
     {
-        // 1. Leer input del jugador
-        float horizontal = Input.GetAxis("Horizontal"); // A/D o flechas
-        float vertical = Input.GetAxis("Vertical");     // W/S o flechas
-
-        Vector3 inputDirection = new Vector3(horizontal, 0f, vertical).normalized;
+        // 1. Leer input del jugador desde el Input System nuevo
+        Vector2 moveInput = moveAction?.ReadValue<Vector2>() ?? Vector2.zero;
+        Vector3 inputDirection = new Vector3(moveInput.x, 0f, moveInput.y).normalized;
 
         // 2. Calcular dirección relativa a la cámara
         Vector3 moveDirection = Vector3.zero;
