@@ -20,6 +20,8 @@ public class PhotoCollectionManager : MonoBehaviour
 
     private readonly Dictionary<string, PhotoState> photoStates =
         new(StringComparer.Ordinal);
+    private readonly HashSet<string> registeredCollectibleIds =
+        new(StringComparer.Ordinal);
     private bool completionNotified;
 
     private void Awake()
@@ -70,6 +72,31 @@ public class PhotoCollectionManager : MonoBehaviour
         return true;
     }
 
+    public bool RegisterCollectible(string photoId)
+    {
+        photoId = photoId?.Trim();
+
+        if (string.IsNullOrEmpty(photoId))
+        {
+            Debug.LogError("Un coleccionable no tiene identificador de foto.", this);
+            return false;
+        }
+
+        if (!registeredCollectibleIds.Add(photoId))
+        {
+            Debug.LogError($"Hay más de un coleccionable con el identificador '{photoId}'.", this);
+            return false;
+        }
+
+        if (!photoStates.ContainsKey(photoId))
+        {
+            photoStates.Add(photoId, PhotoState.Locked);
+            ProgressChanged?.Invoke(UnlockedCount, TotalCount);
+        }
+
+        return true;
+    }
+
     public bool TryMarkAsSeen(string photoId)
     {
         if (!photoStates.TryGetValue(photoId, out PhotoState currentState)
@@ -91,6 +118,7 @@ public class PhotoCollectionManager : MonoBehaviour
     private void InitializeCatalog()
     {
         photoStates.Clear();
+        registeredCollectibleIds.Clear();
         UnlockedCount = 0;
         completionNotified = false;
 
