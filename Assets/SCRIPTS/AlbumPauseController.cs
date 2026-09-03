@@ -50,9 +50,11 @@ public class AlbumPauseController : MonoBehaviour
             previousTimeScale = Time.timeScale;
             Time.timeScale = 0f;
             gameInput.SetGameplayInputEnabled(false);
+            gameInput.SetAlbumNavigationEnabled(true);
         }
         else
         {
+            gameInput.SetAlbumNavigationEnabled(false);
             Time.timeScale = previousTimeScale;
             gameInput.SetGameplayInputEnabled(true);
         }

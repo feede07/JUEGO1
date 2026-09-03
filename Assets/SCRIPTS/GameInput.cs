@@ -9,6 +9,8 @@ public class GameInput : MonoBehaviour
 
     public event Action InteractPressed;
     public event Action AlbumPressed;
+    public event Action PreviousPressed;
+    public event Action NextPressed;
 
     public Vector2 Move => gameplayInputEnabled && moveAction != null
         ? moveAction.ReadValue<Vector2>()
@@ -24,6 +26,8 @@ public class GameInput : MonoBehaviour
     private InputAction lookAction;
     private InputAction interactAction;
     private InputAction albumAction;
+    private InputAction previousAction;
+    private InputAction nextAction;
     private bool gameplayInputEnabled = true;
 
     private void Awake()
@@ -40,6 +44,8 @@ public class GameInput : MonoBehaviour
         lookAction = FindRequiredAction("Player/Look");
         interactAction = FindRequiredAction("Player/Interact");
         albumAction = FindRequiredAction("Player/Album");
+        previousAction = FindRequiredAction("Player/Previous");
+        nextAction = FindRequiredAction("Player/Next");
     }
 
     private void OnEnable()
@@ -51,8 +57,11 @@ public class GameInput : MonoBehaviour
 
         interactAction.performed += OnInteractPerformed;
         albumAction.performed += OnAlbumPerformed;
+        previousAction.performed += OnPreviousPerformed;
+        nextAction.performed += OnNextPerformed;
 
         SetGameplayInputEnabled(true);
+        SetAlbumNavigationEnabled(false);
         albumAction.Enable();
     }
 
@@ -65,6 +74,8 @@ public class GameInput : MonoBehaviour
 
         interactAction.performed -= OnInteractPerformed;
         albumAction.performed -= OnAlbumPerformed;
+        previousAction.performed -= OnPreviousPerformed;
+        nextAction.performed -= OnNextPerformed;
     }
 
     private void OnDestroy()
@@ -81,6 +92,12 @@ public class GameInput : MonoBehaviour
         SetActionEnabled(moveAction, enabled);
         SetActionEnabled(lookAction, enabled);
         SetActionEnabled(interactAction, enabled);
+    }
+
+    public void SetAlbumNavigationEnabled(bool enabled)
+    {
+        SetActionEnabled(previousAction, enabled);
+        SetActionEnabled(nextAction, enabled);
     }
 
     private InputAction FindRequiredAction(string actionPath)
@@ -119,5 +136,15 @@ public class GameInput : MonoBehaviour
     private void OnAlbumPerformed(InputAction.CallbackContext context)
     {
         AlbumPressed?.Invoke();
+    }
+
+    private void OnPreviousPerformed(InputAction.CallbackContext context)
+    {
+        PreviousPressed?.Invoke();
+    }
+
+    private void OnNextPerformed(InputAction.CallbackContext context)
+    {
+        NextPressed?.Invoke();
     }
 }
