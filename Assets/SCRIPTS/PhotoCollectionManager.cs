@@ -88,12 +88,26 @@ public class PhotoCollectionManager : MonoBehaviour
             return false;
         }
 
-        if (!photoStates.ContainsKey(photoId))
+        return RegisterPhoto(photoId);
+    }
+
+    public bool RegisterPhoto(string photoId)
+    {
+        photoId = photoId?.Trim();
+
+        if (string.IsNullOrEmpty(photoId))
         {
-            photoStates.Add(photoId, PhotoState.Locked);
-            ProgressChanged?.Invoke(UnlockedCount, TotalCount);
+            Debug.LogError("No se puede registrar una foto sin identificador.", this);
+            return false;
         }
 
+        if (photoStates.ContainsKey(photoId))
+        {
+            return true;
+        }
+
+        photoStates.Add(photoId, PhotoState.Locked);
+        ProgressChanged?.Invoke(UnlockedCount, TotalCount);
         return true;
     }
 
