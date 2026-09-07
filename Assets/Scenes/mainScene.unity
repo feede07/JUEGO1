@@ -3314,6 +3314,7 @@ MonoBehaviour:
   mediaDisplay: {fileID: 1693877247}
   aspectRatioFitter: {fileID: 1693877246}
   titleText: {fileID: 457822021}
+  loadingIndicator: {fileID: 0}
   closeButton: {fileID: 1018304225}
   videoPlayer: {fileID: 709677691}
   loopVideo: 0
@@ -7551,6 +7552,8 @@ MonoBehaviour:
   lockedOverlay: {fileID: 764830200}
   newIndicator: {fileID: 299026877}
   mediaTitle: foto1
+  fullMediaResourcePath: AlbumFull/photo_01
+  resourceIsVideo: 1
   videoClip: {fileID: 0}
   mediaViewer: {fileID: 709677690}
 --- !u!114 &1802173990
@@ -7750,7 +7753,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: babbb2e05e19a114a8f7d8527f7f9b1a, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 4255a44a16605384c9d8d3c40aba77e5, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1

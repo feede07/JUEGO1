@@ -15,6 +15,10 @@ public class AlbumPhotoSlot : MonoBehaviour, IPointerClickHandler
 
     [Header("Contenido ampliado")]
     [SerializeField] private string mediaTitle;
+    [Tooltip("Ruta dentro de una carpeta Resources, sin extensión. Ejemplo: AlbumFull/photo_01")]
+    [SerializeField] private string fullMediaResourcePath;
+    [SerializeField] private bool resourceIsVideo;
+    [Tooltip("Compatibilidad temporal. Déjalo vacío cuando uses la ruta de Resources.")]
     [SerializeField] private VideoClip videoClip;
     [SerializeField] private AlbumMediaViewer mediaViewer;
 
@@ -110,7 +114,18 @@ public class AlbumPhotoSlot : MonoBehaviour, IPointerClickHandler
 
         collectionManager.TryMarkAsSeen(photoId);
 
-        if (videoClip != null)
+        if (!string.IsNullOrWhiteSpace(fullMediaResourcePath))
+        {
+            if (resourceIsVideo)
+            {
+                mediaViewer.ShowVideoFromResources(fullMediaResourcePath, mediaTitle);
+            }
+            else
+            {
+                mediaViewer.ShowImageFromResources(fullMediaResourcePath, mediaTitle);
+            }
+        }
+        else if (videoClip != null)
         {
             mediaViewer.ShowVideo(videoClip, mediaTitle);
         }
