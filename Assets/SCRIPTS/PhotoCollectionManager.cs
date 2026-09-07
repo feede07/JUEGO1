@@ -11,9 +11,6 @@ public class PhotoCollectionManager : MonoBehaviour
     public event Action<int, int> ProgressChanged;
     public event Action CollectionCompleted;
 
-    [Header("Catálogo de fotos")]
-    [SerializeField] private List<string> photoIds = new();
-
     public int TotalCount => photoStates.Count;
     public int UnlockedCount { get; private set; }
     public bool IsComplete => TotalCount > 0 && UnlockedCount == TotalCount;
@@ -101,13 +98,13 @@ public class PhotoCollectionManager : MonoBehaviour
             return false;
         }
 
-        if (photoStates.ContainsKey(photoId))
+        if (!photoStates.ContainsKey(photoId))
         {
-            return true;
+            Debug.LogError(
+                $"La foto '{photoId}' no pertenece al catálogo photo_01-photo_86.", this);
+            return false;
         }
 
-        photoStates.Add(photoId, PhotoState.Locked);
-        ProgressChanged?.Invoke(UnlockedCount, TotalCount);
         return true;
     }
 
@@ -129,6 +126,27 @@ public class PhotoCollectionManager : MonoBehaviour
         return photoStates.TryGetValue(photoId, out state);
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    [ContextMenu("DEBUG/Desbloquear las 86 fotos")]
+    private void DebugUnlockAllPhotos()
+    {
+        for (int photoNumber = 1; photoNumber <= AlbumCatalogLayout.TotalPhotos; photoNumber++)
+        {
+            string photoId = AlbumCatalogLayout.FormatPhotoId(photoNumber);
+            photoStates[photoId] = PhotoState.Seen;
+        }
+
+        UnlockedCount = TotalCount;
+        ProgressChanged?.Invoke(UnlockedCount, TotalCount);
+
+        if (!completionNotified)
+        {
+            completionNotified = true;
+            CollectionCompleted?.Invoke();
+        }
+    }
+#endif
+
     private void InitializeCatalog()
     {
         photoStates.Clear();
@@ -136,20 +154,10 @@ public class PhotoCollectionManager : MonoBehaviour
         UnlockedCount = 0;
         completionNotified = false;
 
-        foreach (string rawId in photoIds)
+        for (int photoNumber = 1; photoNumber <= AlbumCatalogLayout.TotalPhotos; photoNumber++)
         {
-            string photoId = rawId?.Trim();
-
-            if (string.IsNullOrEmpty(photoId))
-            {
-                Debug.LogWarning("El catálogo contiene un identificador de foto vacío.", this);
-                continue;
-            }
-
-            if (!photoStates.TryAdd(photoId, PhotoState.Locked))
-            {
-                Debug.LogError($"El identificador de foto '{photoId}' está duplicado.", this);
-            }
+            string photoId = AlbumCatalogLayout.FormatPhotoId(photoNumber);
+            photoStates.Add(photoId, PhotoState.Locked);
         }
     }
 }
