@@ -26,6 +26,14 @@ public class PhotoCollectible : MonoBehaviour
         if (!collectionManager.RegisterCollectible(photoId))
         {
             enabled = false;
+            return;
+        }
+
+        if (collectionManager.TryGetPhotoState(photoId, out PhotoState state)
+            && state != PhotoState.Locked)
+        {
+            isCollected = true;
+            gameObject.SetActive(false);
         }
     }
 

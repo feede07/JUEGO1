@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 [DefaultExecutionOrder(-90)]
@@ -14,6 +15,9 @@ public class PhotoCollectionManager : MonoBehaviour
     public int TotalCount => photoStates.Count;
     public int UnlockedCount { get; private set; }
     public bool IsComplete => TotalCount > 0 && UnlockedCount == TotalCount;
+    public int SavedPageIndex { get; private set; }
+
+    private string SaveFilePath => Path.Combine(Application.persistentDataPath, "album_save.json");
 
     private readonly Dictionary<string, PhotoState> photoStates =
         new(StringComparer.Ordinal);
@@ -32,6 +36,7 @@ public class PhotoCollectionManager : MonoBehaviour
 
         Instance = this;
         InitializeCatalog();
+        LoadProgress();
     }
 
     private void OnDestroy()
@@ -65,6 +70,8 @@ public class PhotoCollectionManager : MonoBehaviour
             completionNotified = true;
             CollectionCompleted?.Invoke();
         }
+
+        SaveProgress();
 
         return true;
     }
@@ -118,12 +125,46 @@ public class PhotoCollectionManager : MonoBehaviour
 
         photoStates[photoId] = PhotoState.Seen;
         PhotoStateChanged?.Invoke(photoId, PhotoState.Seen);
+        SaveProgress();
         return true;
     }
 
     public bool TryGetPhotoState(string photoId, out PhotoState state)
     {
         return photoStates.TryGetValue(photoId, out state);
+    }
+
+    public bool DeleteSavedProgress()
+    {
+        try
+        {
+            if (File.Exists(SaveFilePath))
+            {
+                File.Delete(SaveFilePath);
+            }
+
+            return true;
+        }
+        catch (Exception exception)
+        {
+            Debug.LogError(
+                $"No se pudo borrar el progreso guardado.\n{exception.Message}",
+                this);
+            return false;
+        }
+    }
+
+    public void SetSavedPageIndex(int pageIndex)
+    {
+        pageIndex = Mathf.Max(0, pageIndex);
+
+        if (SavedPageIndex == pageIndex)
+        {
+            return;
+        }
+
+        SavedPageIndex = pageIndex;
+        SaveProgress();
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -144,6 +185,8 @@ public class PhotoCollectionManager : MonoBehaviour
             completionNotified = true;
             CollectionCompleted?.Invoke();
         }
+
+        SaveProgress();
     }
 #endif
 
@@ -152,6 +195,7 @@ public class PhotoCollectionManager : MonoBehaviour
         photoStates.Clear();
         registeredCollectibleIds.Clear();
         UnlockedCount = 0;
+        SavedPageIndex = 0;
         completionNotified = false;
 
         for (int photoNumber = 1; photoNumber <= AlbumCatalogLayout.TotalPhotos; photoNumber++)
@@ -159,5 +203,105 @@ public class PhotoCollectionManager : MonoBehaviour
             string photoId = AlbumCatalogLayout.FormatPhotoId(photoNumber);
             photoStates.Add(photoId, PhotoState.Locked);
         }
+    }
+
+    private void LoadProgress()
+    {
+        if (!File.Exists(SaveFilePath))
+        {
+            return;
+        }
+
+        try
+        {
+            string json = File.ReadAllText(SaveFilePath);
+            AlbumSaveData saveData = JsonUtility.FromJson<AlbumSaveData>(json);
+
+            if (saveData == null || saveData.photoStates == null)
+            {
+                Debug.LogWarning("El archivo de guardado del álbum no contiene datos válidos.", this);
+                return;
+            }
+
+            foreach (PhotoSaveEntry entry in saveData.photoStates)
+            {
+                if (entry == null || !photoStates.ContainsKey(entry.photoId))
+                {
+                    continue;
+                }
+
+                if (!Enum.IsDefined(typeof(PhotoState), entry.state))
+                {
+                    continue;
+                }
+
+                photoStates[entry.photoId] = entry.state;
+            }
+
+            UnlockedCount = 0;
+            foreach (PhotoState state in photoStates.Values)
+            {
+                if (state != PhotoState.Locked)
+                {
+                    UnlockedCount++;
+                }
+            }
+
+            SavedPageIndex = Mathf.Max(0, saveData.currentPageIndex);
+            completionNotified = IsComplete;
+        }
+        catch (Exception exception)
+        {
+            Debug.LogWarning(
+                $"No se pudo cargar el progreso del álbum. Se iniciará una sesión nueva.\n{exception.Message}",
+                this);
+        }
+    }
+
+    private void SaveProgress()
+    {
+        try
+        {
+            AlbumSaveData saveData = new()
+            {
+                version = 1,
+                currentPageIndex = SavedPageIndex,
+                photoStates = new List<PhotoSaveEntry>(photoStates.Count)
+            };
+
+            for (int photoNumber = 1; photoNumber <= AlbumCatalogLayout.TotalPhotos; photoNumber++)
+            {
+                string photoId = AlbumCatalogLayout.FormatPhotoId(photoNumber);
+                saveData.photoStates.Add(new PhotoSaveEntry
+                {
+                    photoId = photoId,
+                    state = photoStates[photoId]
+                });
+            }
+
+            string json = JsonUtility.ToJson(saveData, true);
+            File.WriteAllText(SaveFilePath, json);
+        }
+        catch (Exception exception)
+        {
+            Debug.LogWarning(
+                $"No se pudo guardar el progreso del álbum.\n{exception.Message}",
+                this);
+        }
+    }
+
+    [Serializable]
+    private sealed class AlbumSaveData
+    {
+        public int version;
+        public int currentPageIndex;
+        public List<PhotoSaveEntry> photoStates;
+    }
+
+    [Serializable]
+    private sealed class PhotoSaveEntry
+    {
+        public string photoId;
+        public PhotoState state;
     }
 }

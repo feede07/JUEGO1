@@ -7,6 +7,22 @@ public class PhotoInteractor : MonoBehaviour
     private readonly HashSet<PhotoCollectible> nearbyPhotos = new();
     private GameInput gameInput;
 
+    public bool HasAvailablePhoto
+    {
+        get
+        {
+            foreach (PhotoCollectible photo in nearbyPhotos)
+            {
+                if (photo != null && photo.IsAvailable)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
     private void Awake()
     {
         gameInput = GetComponent<GameInput>();

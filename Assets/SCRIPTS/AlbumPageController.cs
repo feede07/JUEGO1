@@ -51,7 +51,10 @@ public class AlbumPageController : MonoBehaviour
             return;
         }
 
-        SetPage(0, true);
+        int savedPageIndex = PhotoCollectionManager.Instance != null
+            ? PhotoCollectionManager.Instance.SavedPageIndex
+            : 0;
+        SetPage(savedPageIndex, true);
     }
 
     private void OnDisable()
@@ -111,6 +114,11 @@ public class AlbumPageController : MonoBehaviour
 
         UpdatePageCounter();
         PageChanged?.Invoke(CurrentPageIndex);
+
+        if (!forceRefresh && PhotoCollectionManager.Instance != null)
+        {
+            PhotoCollectionManager.Instance.SetSavedPageIndex(CurrentPageIndex);
+        }
     }
 
     private void UpdatePageCounter()

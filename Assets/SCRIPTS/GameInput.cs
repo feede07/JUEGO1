@@ -100,6 +100,11 @@ public class GameInput : MonoBehaviour
         SetActionEnabled(nextAction, enabled);
     }
 
+    public void SetAlbumInputEnabled(bool enabled)
+    {
+        SetActionEnabled(albumAction, enabled);
+    }
+
     private InputAction FindRequiredAction(string actionPath)
     {
         InputAction action = InputSystem.actions.FindAction(actionPath);

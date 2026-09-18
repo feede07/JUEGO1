@@ -25,12 +25,15 @@ public class AlbumPhotoSlot : MonoBehaviour, IPointerClickHandler
     public string PhotoId => photoId;
 
     private PhotoCollectionManager collectionManager;
+    private AlbumPauseController pauseController;
     private bool isUnlocked;
+    private bool wasVisibleWhileAlbumOpen;
 
     private void Awake()
     {
         photoId = photoId?.Trim();
         collectionManager = PhotoCollectionManager.Instance;
+        pauseController = FindFirstObjectByType<AlbumPauseController>();
 
         if (collectionManager == null)
         {
@@ -55,6 +58,7 @@ public class AlbumPhotoSlot : MonoBehaviour, IPointerClickHandler
         }
 
         collectionManager.PhotoStateChanged += OnPhotoStateChanged;
+        wasVisibleWhileAlbumOpen = pauseController != null && pauseController.IsAlbumOpen;
         RefreshState();
     }
 
@@ -66,7 +70,13 @@ public class AlbumPhotoSlot : MonoBehaviour, IPointerClickHandler
         }
 
         collectionManager.PhotoStateChanged -= OnPhotoStateChanged;
-        collectionManager.TryMarkAsSeen(photoId);
+
+        if (wasVisibleWhileAlbumOpen)
+        {
+            collectionManager.TryMarkAsSeen(photoId);
+        }
+
+        wasVisibleWhileAlbumOpen = false;
     }
 
     private void OnPhotoStateChanged(string changedPhotoId, PhotoState state)
